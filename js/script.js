@@ -35,16 +35,22 @@ function buildGrid(difficulty) {
     function cellClickHandler() {
             let thisCellNumber = parseInt(this.dataset.cellno);
             if (bombArray.includes(thisCellNumber)) {
-                this.classList.add('bomb');
+                this.classList.add("bomb");
                 gameEnd(false);
             }
             else {
-                this.classList.add('active');
+                this.classList.add("active");
                 let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
                 console.log(thisAdjacents);
                 let thisAdjacentBombs = countBombsInArray(thisAdjacents);
                 console.log(thisAdjacentBombs);
-                this.querySelector('span').textContent = thisAdjacentBombs;
+                if (thisAdjacentBombs > 0) {
+                    this.classList.add(`b${thisAdjacentBombs}`);
+                    this.querySelector("span").textContent = thisAdjacentBombs;
+                }
+                else {
+                    this.querySelector("span").textContent = "";
+                }
                 safeCellsClicked.push(thisCellNumber);
                 console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
                 if (safeCellsClicked.length >= gridSize - numberofBombs) {

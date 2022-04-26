@@ -14,7 +14,7 @@ header {
 main {
     height: 85vh;
     padding: 2rem;
-    background-color: #7fffd4;
+    background-color: #bdbdbd;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -41,7 +41,10 @@ footer {
 }
 
 .cell {
-    border: 1px solid white;
+    border-top: 4px solid white;
+    border-left: 4px solid white;
+    border-right: 4px solid #7b7b7b;
+    border-bottom: 4px solid #7b7b7b;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -70,12 +73,37 @@ footer {
 }
 
 .cell.active {
-    background-color: #6495ed;
+    border: 1px solid #7b7b7b;
 }
 
 .cell.bomb {
     background-color: #f4001e;
 }
+
+.b1 {
+   color: #0000ff; 
+}
+.b2 {
+    color: #007b00; 
+ }
+ .b3 {
+    color: #ff0000; 
+ }
+ .b4 {
+    color: #00007b; 
+ }
+ .b5 {
+    color: #7b0000; 
+ }
+ .b6 {
+    color: #007b7b; 
+ }
+ .b7 {
+    color: #000000; 
+ }
+ .b8 {
+    color: #7b7b7b; 
+ }
 
 .cell.active span,
 .cell.bomb span {
