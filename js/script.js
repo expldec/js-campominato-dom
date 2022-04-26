@@ -51,18 +51,41 @@ function buildGrid(difficulty) {
             let thisCellNumber = parseInt(this.textContent);
             if (bombArray.includes(thisCellNumber)) {
                 this.classList.add('bomb');
-                alert('hai perso');
+                gameEnd(false);
             }
             else {
                 this.classList.add('active');
                 safeCellsClicked.push(thisCellNumber);
                 console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
                 if (safeCellsClicked.length >= gridSize - numberofBombs) {
-                    alert('hai vinto');
+                    gameEnd(true);
                 }
             }
             this.removeEventListener('click', cellClickHandler);
 
+    }
+    // questa funzione prende un valore booleano (true === vittoria, false === sconfitta)
+    // non ritorna niente e manipola il DOM per mostrare la schermata di fine gioco al giocatore
+    function gameEnd(winLose) {
+        let result = document.getElementById("result");
+        let resultText = "";
+        if (winLose) {
+            resultText = `Hai vinto!!`;
+        }
+        else {
+            resultText = `Hai perso. hai fatto ${safeCellsClicked.length} punti su ${gridSize - numberofBombs}`
+        }
+        result.textContent = resultText;
+        result.classList.remove("hidden")
+
+        //disattiviamo gli eventListener su tutte le celle
+        cells = document.getElementsByClassName("cell")
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].removeEventListener("click", cellClickHandler);
+            if (bombArray.includes(parseInt(cells[i].textContent))) {
+                cells[i].classList.add('bomb');
+            }
+        }
     }
 }
 
@@ -76,6 +99,8 @@ function prepareGame(){
     let newGrid = buildGrid(userPickedDifficulty);
     //sostituiamo il container della griglia con quello generato dalla funzione
     grid.parentNode.replaceChild(newGrid, grid);
+    //
+    document.getElementById("result").classList.add("hidden")
 }
 
 function difficultyToNumber(difficultyString) {
@@ -108,3 +133,4 @@ function generateUniqueRandomsinRange(quantity, rangeMax) {
     uniqueRandoms.sort(function(a, b){return a - b});
     return uniqueRandoms;
 }
+
