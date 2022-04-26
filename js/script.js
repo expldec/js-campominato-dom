@@ -1,14 +1,14 @@
 // X Il computer deve generare 16 numeri casuali nello stesso range della difficoltà prescelta: le bombe.
 // X I numeri nella lista delle bombe non possono essere duplicati.
 // X In seguito l'utente clicca su una cella: se il numero è presente nella lista dei numeri generati - abbiamo calpestato una bomba - la cella si colora di rosso e la partita termina, altrimenti la cella cliccata si colora di azzurro e l'utente può continuare a cliccare sulle altre celle.
-// La partita termina quando il giocatore clicca su una bomba o raggiunge il numero massimo possibile di numeri consentiti.
-// Al termine della partita il software deve comunicare il punteggio, cioè il numero di volte che l’utente ha cliccato su una cella che non era una bomba.
+// X La partita termina quando il giocatore clicca su una bomba o raggiunge il numero massimo possibile di numeri consentiti.
+// X Al termine della partita il software deve comunicare il punteggio, cioè il numero di volte che l’utente ha cliccato su una cella che non era una bomba.
 // **BONUS:**
 // 1 - L'utente indica un livello di difficoltà in base al quale viene generata una griglia di gioco quadrata, in cui ogni cella contiene un numero tra quelli compresi in un range:
-// con difficoltà 1 => tra 1 e 100
-// con difficoltà 2 => tra 1 e 81
-// con difficoltà 3 => tra 1 e 49
-// **2- quando si clicca su una bomba e finisce la partita, evitare che si possa cliccare su altre celle
+// X con difficoltà 1 => tra 1 e 100
+// X con difficoltà 2 => tra 1 e 81
+// X con difficoltà 3 => tra 1 e 49
+// X **2- quando si clicca su una bomba e finisce la partita, evitare che si possa cliccare su altre celle
 // ****3- quando si clicca su una bomba e finisce la partita, il software scopre tutte le bombe nascoste
 
 
@@ -46,7 +46,7 @@ function buildGrid(difficulty) {
     return thisGrid;
 
 
-    // HELPER FUNCTIONS. Le creo all'interno di questa funzione così può accedere alla varaibili dichiarate al suo interno.
+    // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla varaibili dichiarate al suo interno.
     function cellClickHandler() {
             let thisCellNumber = parseInt(this.textContent);
             if (bombArray.includes(thisCellNumber)) {
@@ -69,11 +69,12 @@ function buildGrid(difficulty) {
     function gameEnd(winLose) {
         let result = document.getElementById("result");
         let resultText = "";
+        let pluralizedPoint = safeCellsClicked.length ===1 ? "punto" : "punti";
         if (winLose) {
             resultText = `Hai vinto!!`;
         }
         else {
-            resultText = `Hai perso. hai fatto ${safeCellsClicked.length} punti su ${gridSize - numberofBombs}`
+            resultText = `Hai perso. Hai fatto ${safeCellsClicked.length} ${pluralizedPoint} su ${gridSize - numberofBombs}`
         }
         result.textContent = resultText;
         result.classList.remove("hidden")
@@ -82,7 +83,8 @@ function buildGrid(difficulty) {
         cells = document.getElementsByClassName("cell")
         for (let i = 0; i < cells.length; i++) {
             cells[i].removeEventListener("click", cellClickHandler);
-            if (bombArray.includes(parseInt(cells[i].textContent))) {
+            //se abbiamo perso, evidenziamo tutte le bombe
+            if (!winLose && bombArray.includes(parseInt(cells[i].textContent))) {
                 cells[i].classList.add('bomb');
             }
         }
