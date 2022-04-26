@@ -45,6 +45,9 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 1.5rem;
 }
 
 .cell.easy {

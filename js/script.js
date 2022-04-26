@@ -1,18 +1,3 @@
-// X Il computer deve generare 16 numeri casuali nello stesso range della difficoltà prescelta: le bombe.
-// X I numeri nella lista delle bombe non possono essere duplicati.
-// X In seguito l'utente clicca su una cella: se il numero è presente nella lista dei numeri generati - abbiamo calpestato una bomba - la cella si colora di rosso e la partita termina, altrimenti la cella cliccata si colora di azzurro e l'utente può continuare a cliccare sulle altre celle.
-// X La partita termina quando il giocatore clicca su una bomba o raggiunge il numero massimo possibile di numeri consentiti.
-// X Al termine della partita il software deve comunicare il punteggio, cioè il numero di volte che l’utente ha cliccato su una cella che non era una bomba.
-// **BONUS:**
-// 1 - L'utente indica un livello di difficoltà in base al quale viene generata una griglia di gioco quadrata, in cui ogni cella contiene un numero tra quelli compresi in un range:
-// X con difficoltà 1 => tra 1 e 100
-// X con difficoltà 2 => tra 1 e 81
-// X con difficoltà 3 => tra 1 e 49
-// X **2- quando si clicca su una bomba e finisce la partita, evitare che si possa cliccare su altre celle
-// ****3- quando si clicca su una bomba e finisce la partita, il software scopre tutte le bombe nascoste
-
-
-
 //imbrigliamo il bottone per generare la griglia. Gli mettiamo un event listener.
 document.getElementById('start-button').addEventListener('click', prepareGame)
 
@@ -34,27 +19,32 @@ function buildGrid(difficulty) {
     for (let i = 1; i <= gridSize; i++) {
         let newCell = document.createElement('div');
         newCell.innerHTML = `<span>${i}</span>`;
+        newCell.dataset.cellno = i;
         newCell.classList.add('cell');
         newCell.classList.add(difficulty);
         //aggiungiamo un eventListener che attiva/disattiva la classe "active" se si clicca sul div
                newCell.addEventListener('click', cellClickHandler);
         thisGrid.append(newCell);
     }
-    
-
     //una volta popolata la griglia, è pronta e la restituiamo
+    
     return thisGrid;
 
 
     // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla varaibili dichiarate al suo interno.
     function cellClickHandler() {
-            let thisCellNumber = parseInt(this.textContent);
+            let thisCellNumber = parseInt(this.dataset.cellno);
             if (bombArray.includes(thisCellNumber)) {
                 this.classList.add('bomb');
                 gameEnd(false);
             }
             else {
                 this.classList.add('active');
+                let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
+                console.log(thisAdjacents);
+                let thisAdjacentBombs = countBombsInArray(thisAdjacents);
+                console.log(thisAdjacentBombs);
+                this.querySelector('span').textContent = thisAdjacentBombs;
                 safeCellsClicked.push(thisCellNumber);
                 console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
                 if (safeCellsClicked.length >= gridSize - numberofBombs) {
@@ -84,10 +74,20 @@ function buildGrid(difficulty) {
         for (let i = 0; i < cells.length; i++) {
             cells[i].removeEventListener("click", cellClickHandler);
             //se abbiamo perso, evidenziamo tutte le bombe
-            if (!winLose && bombArray.includes(parseInt(cells[i].textContent))) {
+            if (!winLose && bombArray.includes(parseInt(cells[i].dataset.cellno))) {
                 cells[i].classList.add('bomb');
             }
         }
+    }
+
+    function countBombsInArray(adjacentList) {
+        let sumOfBombs = 0;
+        for (let i = 0; i < adjacentList.length; i++) {
+            if (bombArray.includes(adjacentList[i])) {
+                sumOfBombs++;
+            }
+        }
+        return sumOfBombs;
     }
 }
 
@@ -136,3 +136,76 @@ function generateUniqueRandomsinRange(quantity, rangeMax) {
     return uniqueRandoms;
 }
 
+// Prende il numero di cella di una griglia rettangolare dove le celle sono numerate da destra a sinistra, dall'alto verso il basso
+// e restituisce un array contenente i numeri delle celle che la circondano.
+//
+// Valori di input:
+// cellno (int): il numero della cella
+// width (int): il numero delle celle lungo la larghezza della griglia rettangolare
+// height (int): il numero delle celle lungo l'altezza della griglia rettangolare
+//
+function getAdjacents(cellno,width,height) {
+    const isThisEdge = isEdge(cellno,width,height);
+    const adjacents = [];
+    if ([0,4,7,8].includes(isThisEdge)) {
+        adjacents.push(cellno - width - 1);
+    }
+    if ([0,3,4,6,7,8].includes(isThisEdge)) {
+        adjacents.push(cellno - width);
+    }
+    if ([0,3,6,8].includes(isThisEdge)) {
+        adjacents.push(cellno - width + 1);
+    }
+    if ([0,2,4,5,7,8].includes(isThisEdge)) {
+        adjacents.push(cellno - 1);}
+
+    if ([0,1,3,5,6,8].includes(isThisEdge)) {
+        adjacents.push(cellno + 1);
+    }
+    if ([0,2,5,7].includes(isThisEdge)) {
+        adjacents.push(cellno + width - 1);
+    }
+    if ([0,1,2,5,6,7].includes(isThisEdge)) {
+        adjacents.push(cellno + width);
+    }
+    if ([0,1,5,6].includes(isThisEdge)) {
+        adjacents.push(cellno + width + 1);
+    }
+    return adjacents;
+}
+
+// Prende il numero di cella di una griglia rettangolare dove le celle sono numerate da destra a sinistra, dall'alto verso il basso
+// e restituisce un numero che rappresenta la sua posizione rispetto a un bordo.
+//
+// Valori di input:
+// cellno (int): il numero della cella
+// width (int): il numero delle celle lungo la larghezza della griglia rettangolare
+// height (int): il numero delle celle lungo l'altezza della griglia rettangolare
+//
+// Valori di return: 
+// 0: la cella non è lungo un bordo
+// 1: la cella copre l'angolo in alto a sinistra
+// 2: la cella copre l'angolo in alto a destra
+// 3: la cella copre l'angolo in basso a sinistra
+// 4: la cella copre l'angolo in basso a destra
+// 5: la cella si trova sul bordo superiore
+// 6: la cella si trova sul bordo sinistro
+// 7: la cella si trova sul bordo destro
+// 8: la cella si trova sul bordo inferiore
+function isEdge(cellno,width,height) {
+    const isOnTopEdge = Math.floor((cellno - 1) / width) === 0;
+    const isOnBottomEdge = Math.floor((cellno - 1) / width) + 1 === height;
+    const isOnLeftEdge = cellno % width === 1;
+    const isonRightEdge = cellno % width === 0;
+    
+    return isOnTopEdge && isOnLeftEdge ? 1
+         : isOnTopEdge && isonRightEdge ? 2
+         : isOnBottomEdge && isOnLeftEdge ? 3
+         : isOnBottomEdge && isonRightEdge ? 4
+         : isOnTopEdge ? 5
+         : isOnLeftEdge ? 6
+         : isonRightEdge ? 7
+         : isOnBottomEdge ? 8
+         : 0;
+
+}
