@@ -14,15 +14,26 @@ function buildGrid(difficulty) {
     //generiamo un array di bombe appropriato per la dimensione della grid. 
     let bombArray = generateUniqueRandomsinRange(numberofBombs,gridSize);
     console.log(bombArray);
+
+    //TESTING CODE. REMOVE LATER
+    // bombArray = [12,24,30,48];
+    let recursiveCount=0;
+
+
     let safeCellsClicked = [];
     // in questo loop popoliamo il grid-container di tanti div quanta è la gridSize. Aggiungiamo le classi appropriate.
     for (let i = 1; i <= gridSize; i++) {
         let newCell = document.createElement('div');
-        newCell.innerHTML = `<span>${i}</span>`;
+        if (bombArray.includes(i)) {
+            newCell.innerHTML = `<span>&#x1F4A3;</span>`;
+        }
+        else {
+            newCell.innerHTML = `<span></span>`;
+        }
         newCell.dataset.cellno = i;
         newCell.classList.add('cell');
         newCell.classList.add(difficulty);
-        //aggiungiamo un eventListener che attiva/disattiva la classe "active" se si clicca sul div
+        //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
                newCell.addEventListener('click', cellClickHandler);
         thisGrid.append(newCell);
     }
@@ -31,25 +42,27 @@ function buildGrid(difficulty) {
     return thisGrid;
 
 
-    // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla varaibili dichiarate al suo interno.
+    // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla variabili dichiarate al suo interno.
     function cellClickHandler() {
             let thisCellNumber = parseInt(this.dataset.cellno);
+            // se hai cliccato una bomba
             if (bombArray.includes(thisCellNumber)) {
                 this.classList.add("bomb");
                 gameEnd(false);
             }
+            //se hai cliccato una cella pulita
             else {
                 this.classList.add("active");
                 let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
                 console.log(thisAdjacents);
                 let thisAdjacentBombs = countBombsInArray(thisAdjacents);
-                console.log(thisAdjacentBombs);
                 if (thisAdjacentBombs > 0) {
                     this.classList.add(`b${thisAdjacentBombs}`);
                     this.querySelector("span").textContent = thisAdjacentBombs;
                 }
                 else {
-                    this.querySelector("span").textContent = "";
+                    //inizio una funzione ricorsiva
+                    adjacentsDrilldown(thisAdjacents);
                 }
                 safeCellsClicked.push(thisCellNumber);
                 console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
@@ -68,6 +81,9 @@ function buildGrid(difficulty) {
         let pluralizedPoint = safeCellsClicked.length ===1 ? "punto" : "punti";
         if (winLose) {
             resultText = `Hai vinto!!`;
+            safeCellsClicked.sort(function(a, b){return a - b})
+            console.log(safeCellsClicked);
+            console.log('recusion count:', recursiveCount);
         }
         else {
             resultText = `Hai perso. Hai fatto ${safeCellsClicked.length} ${pluralizedPoint} su ${gridSize - numberofBombs}`
@@ -94,6 +110,49 @@ function buildGrid(difficulty) {
             }
         }
         return sumOfBombs;
+    }
+
+    //funzione ricorsiva che viene chiamata quando una cella scoperta non ha bombe intorno
+    // prende un array di celle adiacenti a una data cella,
+    // e scopre le celle libere tra queste finché ne trova tra gli adiacenti degli adiacenti degli adiacenti ecc.
+    function adjacentsDrilldown(thisAdjacents) {
+        //variabile di debug per controllare che non faccia troppe ricursioni
+        recursiveCount++;
+        console.log('No bombs around. drilling down to its neighbors');
+        //facciamo partire un loop per scorrere tutte le celle adiacenti.
+        for (let i = 0; i < thisAdjacents.length; i++) {
+            // a ogni giro, imbrigliamo la cella 
+            let thisAdjacentAdjacent = document.querySelector(`[data-cellno="${thisAdjacents[i]}"]`);
+            console.log('cell', thisAdjacents[i]);
+            // console.log(thisAdjacentAdjacent);
+            //troviamo le celle adiacenti a loro volta a questa
+            let thisAdjacentAdjacents = getAdjacents(thisAdjacents[i],Math.sqrt(gridSize),Math.sqrt(gridSize));
+            console.log('this adjacent cell has he following neighbors:', thisAdjacentAdjacents);
+            //contiamo le bombe intorno a questa cella
+            let thisAdjacentAdjacentBombs = countBombsInArray(thisAdjacentAdjacents);
+            console.log(`this adjacent cell is surrounded by ${thisAdjacentAdjacentBombs} bombs`);
+            // controlliamo che non sia già stata scoperta
+            let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains("active");
+            console.log("is it active?", isThisAdjacentAdjacentClicked);
+            // se non è attiva, la attiviamo
+            if (!isThisAdjacentAdjacentClicked) {
+                console.log('good. Activating cell.');
+                thisAdjacentAdjacent.classList.add("active");
+                safeCellsClicked.push(thisAdjacents[i]);
+                // se ha delle bombe intorno, la popoliamo con il conteggio delle bombe
+                if (thisAdjacentAdjacentBombs > 0) {
+                    thisAdjacentAdjacent.classList.add(`b${thisAdjacentAdjacentBombs}`);
+                    console.log('adding text content:', thisAdjacentAdjacentBombs);
+                    thisAdjacentAdjacent.querySelector("span").textContent = thisAdjacentAdjacentBombs;
+                }
+                // se NON è attiva e NON ha bombe intorno, chiamiamo la funzione in cui già ci troviamo, ricorsivamente,
+                // passadole i vicini di questa cella 
+                if (thisAdjacentAdjacentBombs === 0) {
+                    adjacentsDrilldown(thisAdjacentAdjacents);
+                }
+            }
+            
+        }
     }
 }
 
