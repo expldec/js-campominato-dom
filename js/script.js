@@ -30,8 +30,8 @@ function buildGrid(difficulty) {
         newCell.classList.add(difficulty);
         //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
         newCell.addEventListener('click', cellClickHandler);
-           newCell.addEventListener('contextmenu', cellRightClick);
-        // newCell.addEventListener('contextmenu', cellRightClick);
+        //secondo eventlistener per il click destro
+        newCell.addEventListener('contextmenu', cellRightClick);
         thisGrid.append(newCell);
     }
     //una volta popolata la griglia, è pronta e la restituiamo
@@ -73,10 +73,16 @@ function buildGrid(difficulty) {
 
     function cellRightClick(event) {
         event.preventDefault();
-        console.log('blablabla');
         if (!event.target.classList.contains('active')) {
             console.log(event.target);
-            event.target.classList.toggle('flag');
+            if (!event.target.classList.contains('flag')) {
+                event.target.classList.add('flag');
+                event.target.removeEventListener('click', cellClickHandler)
+            }
+            else {
+                event.target.classList.remove('flag');
+                event.target.addEventListener('click', cellClickHandler)
+            }
         }
         console.log(event.target);
     }
@@ -103,9 +109,10 @@ function buildGrid(difficulty) {
         for (let i = 0; i < cells.length; i++) {
             cells[i].removeEventListener('click', cellClickHandler);
             cells[i].removeEventListener('contextmenu', cellRightClick);
-            //se abbiamo perso, evidenziamo tutte le bombe
+            //se abbiamo perso, evidenziamo tutte le bombe (comprese quelle coperte dalle bandierine)
             if (!winLose && bombArray.includes(parseInt(cells[i].dataset.cellno))) {
                 cells[i].classList.add('bomb');
+                cells[i].classList.remove('flag');
             }
         }
     }
