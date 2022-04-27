@@ -1,13 +1,13 @@
 //imbrigliamo il bottone per generare la griglia. Gli mettiamo un event listener.
 document.getElementById('start-button').addEventListener('click', prepareGame)
 
-// Questa funzione prende una stringa ("difficulty") che può essere "easy", "medium", "hard"
+// Questa funzione prende una stringa ('difficulty') che può essere 'easy', 'medium', 'hard'
 // e costruisce un div contenente, rispettivamente, 100, 81 o 49 div con una classe pertinente alla difficulty 
 function buildGrid(difficulty) {
     //creiamo un div e gli diamo la classe 'grid-container'
     const thisGrid = document.createElement('div')
     thisGrid.classList.add('grid-container');
-    //convertiamo "difficulty" (che è una stringa) in un valore numerico con uno la nostra funzione dedicata
+    //convertiamo 'difficulty' (che è una stringa) in un valore numerico con uno la nostra funzione dedicata
     let gridSize = difficultyToNumber(difficulty);
     //Settiamo una variabile con la quantità di bombe che vogliamo generare
     let numberofBombs = 16;
@@ -24,17 +24,14 @@ function buildGrid(difficulty) {
     // in questo loop popoliamo il grid-container di tanti div quanta è la gridSize. Aggiungiamo le classi appropriate.
     for (let i = 1; i <= gridSize; i++) {
         let newCell = document.createElement('div');
-        if (bombArray.includes(i)) {
-            newCell.innerHTML = `<span>&#x1F4A3;</span>`;
-        }
-        else {
-            newCell.innerHTML = `<span></span>`;
-        }
+        newCell.innerHTML = `<span></span>`;
         newCell.dataset.cellno = i;
         newCell.classList.add('cell');
         newCell.classList.add(difficulty);
         //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
-               newCell.addEventListener('click', cellClickHandler);
+        newCell.addEventListener('click', cellClickHandler);
+           newCell.addEventListener('contextmenu', cellRightClick);
+        // newCell.addEventListener('contextmenu', cellRightClick);
         thisGrid.append(newCell);
     }
     //una volta popolata la griglia, è pronta e la restituiamo
@@ -44,41 +41,51 @@ function buildGrid(difficulty) {
 
     // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla variabili dichiarate al suo interno.
     function cellClickHandler() {
-            let thisCellNumber = parseInt(this.dataset.cellno);
-            // se hai cliccato una bomba
-            if (bombArray.includes(thisCellNumber)) {
-                this.classList.add("bomb");
-                gameEnd(false);
+        let thisCellNumber = parseInt(this.dataset.cellno);
+        // se hai cliccato una bomba
+        if (bombArray.includes(thisCellNumber)) {
+            this.classList.add('bomb');
+            gameEnd(false);
+        }
+        //se hai cliccato una cella pulita
+        else {
+            this.classList.add('active');
+            let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
+            console.log(thisAdjacents);
+            let thisAdjacentBombs = countBombsInArray(thisAdjacents);
+            if (thisAdjacentBombs > 0) {
+                this.classList.add(`b${thisAdjacentBombs}`);
+                this.querySelector('span').textContent = thisAdjacentBombs;
             }
-            //se hai cliccato una cella pulita
             else {
-                this.classList.add("active");
-                let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
-                console.log(thisAdjacents);
-                let thisAdjacentBombs = countBombsInArray(thisAdjacents);
-                if (thisAdjacentBombs > 0) {
-                    this.classList.add(`b${thisAdjacentBombs}`);
-                    this.querySelector("span").textContent = thisAdjacentBombs;
-                }
-                else {
-                    //inizio una funzione ricorsiva
-                    adjacentsDrilldown(thisAdjacents);
-                }
-                safeCellsClicked.push(thisCellNumber);
-                console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
-                if (safeCellsClicked.length >= gridSize - numberofBombs) {
-                    gameEnd(true);
-                }
+                //inizio una funzione ricorsiva
+                adjacentsDrilldown(thisAdjacents);
             }
-            this.removeEventListener('click', cellClickHandler);
+            safeCellsClicked.push(thisCellNumber);
+            console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
+            if (safeCellsClicked.length >= gridSize - numberofBombs) {
+                gameEnd(true);
+            }
+        }
+        this.removeEventListener('click', cellClickHandler);
 
+    }
+
+    function cellRightClick(event) {
+        event.preventDefault();
+        console.log('blablabla');
+        if (!event.target.classList.contains('active')) {
+            console.log(event.target);
+            event.target.classList.toggle('flag');
+        }
+        console.log(event.target);
     }
     // questa funzione prende un valore booleano (true === vittoria, false === sconfitta)
     // non ritorna niente e manipola il DOM per mostrare la schermata di fine gioco al giocatore
     function gameEnd(winLose) {
-        let result = document.getElementById("result");
-        let resultText = "";
-        let pluralizedPoint = safeCellsClicked.length ===1 ? "punto" : "punti";
+        let result = document.getElementById('result');
+        let resultText = '';
+        let pluralizedPoint = safeCellsClicked.length ===1 ? 'punto' : 'punti';
         if (winLose) {
             resultText = `Hai vinto!!`;
             safeCellsClicked.sort(function(a, b){return a - b})
@@ -89,12 +96,13 @@ function buildGrid(difficulty) {
             resultText = `Hai perso. Hai fatto ${safeCellsClicked.length} ${pluralizedPoint} su ${gridSize - numberofBombs}`
         }
         result.textContent = resultText;
-        result.classList.remove("hidden")
+        result.classList.remove('hidden')
 
         //disattiviamo gli eventListener su tutte le celle
-        cells = document.getElementsByClassName("cell")
+        cells = document.getElementsByClassName('cell')
         for (let i = 0; i < cells.length; i++) {
-            cells[i].removeEventListener("click", cellClickHandler);
+            cells[i].removeEventListener('click', cellClickHandler);
+            cells[i].removeEventListener('contextmenu', cellRightClick);
             //se abbiamo perso, evidenziamo tutte le bombe
             if (!winLose && bombArray.includes(parseInt(cells[i].dataset.cellno))) {
                 cells[i].classList.add('bomb');
@@ -122,7 +130,7 @@ function buildGrid(difficulty) {
         //facciamo partire un loop per scorrere tutte le celle adiacenti.
         for (let i = 0; i < thisAdjacents.length; i++) {
             // a ogni giro, imbrigliamo la cella 
-            let thisAdjacentAdjacent = document.querySelector(`[data-cellno="${thisAdjacents[i]}"]`);
+            let thisAdjacentAdjacent = document.querySelector(`[data-cellno='${thisAdjacents[i]}']`);
             console.log('cell', thisAdjacents[i]);
             // console.log(thisAdjacentAdjacent);
             //troviamo le celle adiacenti a loro volta a questa
@@ -132,18 +140,19 @@ function buildGrid(difficulty) {
             let thisAdjacentAdjacentBombs = countBombsInArray(thisAdjacentAdjacents);
             console.log(`this adjacent cell is surrounded by ${thisAdjacentAdjacentBombs} bombs`);
             // controlliamo che non sia già stata scoperta
-            let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains("active");
-            console.log("is it active?", isThisAdjacentAdjacentClicked);
+            let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains('active');
+            let isThisAdjacentAdjacentFlagged = thisAdjacentAdjacent.classList.contains('flag');
+            console.log('is it active?', isThisAdjacentAdjacentClicked);
             // se non è attiva, la attiviamo
-            if (!isThisAdjacentAdjacentClicked) {
+            if (!isThisAdjacentAdjacentClicked&&!isThisAdjacentAdjacentFlagged) {
                 console.log('good. Activating cell.');
-                thisAdjacentAdjacent.classList.add("active");
+                thisAdjacentAdjacent.classList.add('active');
                 safeCellsClicked.push(thisAdjacents[i]);
                 // se ha delle bombe intorno, la popoliamo con il conteggio delle bombe
                 if (thisAdjacentAdjacentBombs > 0) {
                     thisAdjacentAdjacent.classList.add(`b${thisAdjacentAdjacentBombs}`);
                     console.log('adding text content:', thisAdjacentAdjacentBombs);
-                    thisAdjacentAdjacent.querySelector("span").textContent = thisAdjacentAdjacentBombs;
+                    thisAdjacentAdjacent.querySelector('span').textContent = thisAdjacentAdjacentBombs;
                 }
                 // se NON è attiva e NON ha bombe intorno, chiamiamo la funzione in cui già ci troviamo, ricorsivamente,
                 // passadole i vicini di questa cella 
@@ -156,7 +165,7 @@ function buildGrid(difficulty) {
     }
 }
 
-// la funzione chiamata con il click al bottone "start"
+// la funzione chiamata con il click al bottone 'start'
 function prepareGame(){
     //leggiamo la difficolta scelta dall'utente (nel select)
     userPickedDifficulty = document.getElementById('difficulty').value;
@@ -167,7 +176,7 @@ function prepareGame(){
     //sostituiamo il container della griglia con quello generato dalla funzione
     grid.parentNode.replaceChild(newGrid, grid);
     //
-    document.getElementById("result").classList.add("hidden")
+    document.getElementById('result').classList.add('hidden')
 }
 
 function difficultyToNumber(difficultyString) {
@@ -184,8 +193,8 @@ function difficultyToNumber(difficultyString) {
     }
 }
 
-// questa funzione prende due integers (quantity e rangeMax) e restituisce un array contentente "quantity" elementi
-// generati a caso da 1 a "rangemax"
+// questa funzione prende due integers (quantity e rangeMax) e restituisce un array contentente 'quantity' elementi
+// generati a caso da 1 a 'rangemax'
 function generateUniqueRandomsinRange(quantity, rangeMax) {
     let uniqueRandoms = [];
     let i = 0;

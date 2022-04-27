@@ -106,3 +106,16 @@ footer {
 .cell.bomb span {
     display: block;
 }
+
+.cell.bomb span::before {
+    content: '\01F4A3';
+}
+
+.cell.flag span {
+    display: block;
+    pointer-events: none;
+}
+
+.cell.flag span::before {
+    content: '\01F6A9';
+}
