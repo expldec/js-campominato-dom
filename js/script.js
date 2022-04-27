@@ -1,8 +1,24 @@
 //imbrigliamo il bottone per generare la griglia. Gli mettiamo un event listener.
 document.getElementById('start-button').addEventListener('click', prepareGame)
 
-// Questa funzione prende una stringa ('difficulty') che può essere 'easy', 'medium', 'hard'
-// e costruisce un div contenente, rispettivamente, 100, 81 o 49 div con una classe pertinente alla difficulty 
+// la funzione chiamata con il click al bottone 'start'
+function prepareGame(){
+    //leggiamo la difficolta scelta dall'utente (nel select)
+    userPickedDifficulty = document.getElementById('difficulty').value;
+    //imbrigliamo il container della griglia
+    let grid = document.querySelector('.grid-container');
+    //Generiamo una nuova partita con la funzione buildGrid 
+    let newGrid = buildGrid(userPickedDifficulty);
+    //sostituiamo il container della griglia con quello generato dalla funzione
+    grid.parentNode.replaceChild(newGrid, grid);
+    //
+    document.getElementById('result').classList.add('hidden')
+}
+
+// Questa funzione genera la griglia di gioco.
+// prende una stringa ('difficulty') che può essere 'easy', 'medium', 'hard'
+// restituisce un div contenente, rispettivamente, 100, 81 o 49 div con una classe pertinente alla difficulty
+// Le variabili e le funzioni che implementano la logica della partita sono dichiarate qui.
 function buildGrid(difficulty) {
     //creiamo un div e gli diamo la classe 'grid-container'
     const thisGrid = document.createElement('div')
@@ -14,84 +30,100 @@ function buildGrid(difficulty) {
     //generiamo un array di bombe appropriato per la dimensione della grid. 
     let bombArray = generateUniqueRandomsinRange(numberofBombs,gridSize);
     console.log(bombArray);
-
+    // Inizializziamo un array che conterrà le celle "safe" (non-bomba) cliccate dal giocatore
+    let safeCellsClicked = [];
+    
     //TESTING CODE. REMOVE LATER
     // bombArray = [12,24,30,48];
     let recursiveCount=0;
+    // END OF TESTING CODE
 
-
-    let safeCellsClicked = [];
     // in questo loop popoliamo il grid-container di tanti div quanta è la gridSize. Aggiungiamo le classi appropriate.
     for (let i = 1; i <= gridSize; i++) {
         let newCell = document.createElement('div');
         newCell.innerHTML = `<span></span>`;
+        //invece di popolare l'InnerHTML dell'elemento, popolo l'attributo HTML data-cellno del div della cella.
         newCell.dataset.cellno = i;
         newCell.classList.add('cell');
         newCell.classList.add(difficulty);
         //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
         newCell.addEventListener('click', cellClickHandler);
-        //secondo eventlistener per il click destro
+        //secondo eventlistener per il click destro che ci permette di mettere bandierine sulle celle
         newCell.addEventListener('contextmenu', cellRightClick);
         thisGrid.append(newCell);
     }
     //una volta popolata la griglia, è pronta e la restituiamo
-    
     return thisGrid;
 
 
     // HELPER FUNCTIONS. Le creo all'interno di questa funzione così possono accedere alla variabili dichiarate al suo interno.
+
+    //Funzione per stabilire cosa succede nel gioco al click sinistro su una cella
     function cellClickHandler() {
         let thisCellNumber = parseInt(this.dataset.cellno);
-        // se hai cliccato una bomba
+        // se hai cliccato una bomba, hai perso
         if (bombArray.includes(thisCellNumber)) {
             this.classList.add('bomb');
             gameEnd(false);
         }
         //se hai cliccato una cella pulita
         else {
+            //attiviamo la cella
             this.classList.add('active');
+            //troviamo le celle adiacenti a questa
             let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
             console.log(thisAdjacents);
+            //contiamo quante bombe ci sono nelle celle adiacenti
             let thisAdjacentBombs = countBombsInArray(thisAdjacents);
+            //se intorno ci sono bombe, scriviamo il numero di bombe nella cella e le diamo una classe per cambiare colore al testo
             if (thisAdjacentBombs > 0) {
                 this.classList.add(`b${thisAdjacentBombs}`);
                 this.querySelector('span').textContent = thisAdjacentBombs;
             }
+            // se non ci sono bombe intorno, scopriamo anche le celle adiacenti a cascata.
             else {
                 //inizio una funzione ricorsiva
                 adjacentsDrilldown(thisAdjacents);
             }
+            //aggiungo la cella cliccata al conteggio delle celle "pulite" scoperte
             safeCellsClicked.push(thisCellNumber);
             console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
+            //se hai scoperto tutte le celle pulite, hai vinto.
             if (safeCellsClicked.length >= gridSize - numberofBombs) {
                 gameEnd(true);
             }
         }
+        // una volta cliccata una cella, non sarà più cliccabile.
         this.removeEventListener('click', cellClickHandler);
-
     }
 
+    //Funzione per stabilire cosa succede al click DESTRO su una cella (attiva/disattiva la bandiera)
+    //prende con argomento l'evento (passato dall'Event Listener)
     function cellRightClick(event) {
+        //impediamo che compaia il menù a tendina del browser
         event.preventDefault();
-        if (!event.target.classList.contains('active')) {
-            console.log(event.target);
-            if (!event.target.classList.contains('flag')) {
-                event.target.classList.add('flag');
-                event.target.removeEventListener('click', cellClickHandler)
+        //se la cella NON È ATTIVA
+        if (!this.classList.contains('active')) {
+            //se NON è già flaggata, le diamo la classe "flag" e togliamo l'event listener del click sinistro
+            if (!this.classList.contains('flag')) {
+                this.classList.add('flag');
+                this.removeEventListener('click', cellClickHandler)
             }
+            // se è già flaggata, togliamo la classe flag e ripristiniamo l'event listener.
             else {
-                event.target.classList.remove('flag');
-                event.target.addEventListener('click', cellClickHandler)
+                this.classList.remove('flag');
+                this.addEventListener('click', cellClickHandler)
             }
         }
-        console.log(event.target);
     }
+
     // questa funzione prende un valore booleano (true === vittoria, false === sconfitta)
     // non ritorna niente e manipola il DOM per mostrare la schermata di fine gioco al giocatore
     function gameEnd(winLose) {
         let result = document.getElementById('result');
         let resultText = '';
         let pluralizedPoint = safeCellsClicked.length ===1 ? 'punto' : 'punti';
+        //se winLose è true, hai vinto.
         if (winLose) {
             resultText = `Hai vinto!!`;
             safeCellsClicked.sort(function(a, b){return a - b})
@@ -128,7 +160,7 @@ function buildGrid(difficulty) {
     }
 
     //funzione ricorsiva che viene chiamata quando una cella scoperta non ha bombe intorno
-    // prende un array di celle adiacenti a una data cella,
+    // prende un array di celle,
     // e scopre le celle libere tra queste finché ne trova tra gli adiacenti degli adiacenti degli adiacenti ecc.
     function adjacentsDrilldown(thisAdjacents) {
         //variabile di debug per controllare che non faccia troppe ricursioni
@@ -140,7 +172,7 @@ function buildGrid(difficulty) {
             let thisAdjacentAdjacent = document.querySelector(`[data-cellno='${thisAdjacents[i]}']`);
             console.log('cell', thisAdjacents[i]);
             // console.log(thisAdjacentAdjacent);
-            //troviamo le celle adiacenti a loro volta a questa
+            //troviamo le celle a loro volta adiacenti a questa
             let thisAdjacentAdjacents = getAdjacents(thisAdjacents[i],Math.sqrt(gridSize),Math.sqrt(gridSize));
             console.log('this adjacent cell has he following neighbors:', thisAdjacentAdjacents);
             //contiamo le bombe intorno a questa cella
@@ -150,7 +182,8 @@ function buildGrid(difficulty) {
             let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains('active');
             let isThisAdjacentAdjacentFlagged = thisAdjacentAdjacent.classList.contains('flag');
             console.log('is it active?', isThisAdjacentAdjacentClicked);
-            // se non è attiva, la attiviamo
+            console.log('is it flagged?', isThisAdjacentAdjacentFlagged);
+            // se non è attiva (e non è flaggata), la attiviamo
             if (!isThisAdjacentAdjacentClicked&&!isThisAdjacentAdjacentFlagged) {
                 console.log('good. Activating cell.');
                 thisAdjacentAdjacent.classList.add('active');
@@ -170,20 +203,6 @@ function buildGrid(difficulty) {
             
         }
     }
-}
-
-// la funzione chiamata con il click al bottone 'start'
-function prepareGame(){
-    //leggiamo la difficolta scelta dall'utente (nel select)
-    userPickedDifficulty = document.getElementById('difficulty').value;
-    //imbrigliamo il container della griglia
-    let grid = document.querySelector('.grid-container');
-    //creiamo un nuovo container generandolo con la funzione buildGrid 
-    let newGrid = buildGrid(userPickedDifficulty);
-    //sostituiamo il container della griglia con quello generato dalla funzione
-    grid.parentNode.replaceChild(newGrid, grid);
-    //
-    document.getElementById('result').classList.add('hidden')
 }
 
 function difficultyToNumber(difficultyString) {
@@ -229,28 +248,28 @@ function getAdjacents(cellno,width,height) {
     const isThisEdge = isEdge(cellno,width,height);
     const adjacents = [];
     if ([0,4,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width - 1);
+        adjacents.push(cellno - width - 1); //la cella adiacente in alto a sinistra
     }
     if ([0,3,4,6,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width);
+        adjacents.push(cellno - width); // la cella adiacente in alto
     }
     if ([0,3,6,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width + 1);
+        adjacents.push(cellno - width + 1); // la cella adiacente in alto a destra
     }
     if ([0,2,4,5,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - 1);}
+        adjacents.push(cellno - 1);}    // la cella adiacente a sinistra
 
     if ([0,1,3,5,6,8].includes(isThisEdge)) {
-        adjacents.push(cellno + 1);
+        adjacents.push(cellno + 1); // la cella adiacente a destra
     }
     if ([0,2,5,7].includes(isThisEdge)) {
-        adjacents.push(cellno + width - 1);
+        adjacents.push(cellno + width - 1); // la cella adiacente in basso a sinistra
     }
     if ([0,1,2,5,6,7].includes(isThisEdge)) {
-        adjacents.push(cellno + width);
+        adjacents.push(cellno + width); // la cella adiacente in basso
     }
     if ([0,1,5,6].includes(isThisEdge)) {
-        adjacents.push(cellno + width + 1);
+        adjacents.push(cellno + width + 1); // la cella adiacente in basso a destra
     }
     return adjacents;
 }
