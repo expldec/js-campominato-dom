@@ -4,7 +4,7 @@ document.getElementById('start-button').addEventListener('click', prepareGame)
 // la funzione chiamata con il click al bottone 'start'
 function prepareGame(){
     //leggiamo la difficolta scelta dall'utente (nel select)
-    userPickedDifficulty = document.getElementById('difficulty').value;
+    userPickedDifficulty = parseInt(document.getElementById('difficulty').value);
     //imbrigliamo il container della griglia
     let grid = document.querySelector('.grid-container');
     //Generiamo una nuova partita con la funzione buildGrid 
@@ -24,7 +24,8 @@ function buildGrid(difficulty) {
     const thisGrid = document.createElement('div')
     thisGrid.classList.add('grid-container');
     //convertiamo 'difficulty' (che è una stringa) in un valore numerico con uno la nostra funzione dedicata
-    let gridSize = difficultyToNumber(difficulty);
+    // let gridSize = difficultyToNumber(difficulty);
+    let gridSize = difficulty ** 2
     //Settiamo una variabile con la quantità di bombe che vogliamo generare
     let numberofBombs = 16;
     //generiamo un array di bombe appropriato per la dimensione della grid. 
@@ -45,7 +46,9 @@ function buildGrid(difficulty) {
         //invece di popolare l'InnerHTML dell'elemento, popolo l'attributo HTML data-cellno del div della cella.
         newCell.dataset.cellno = i;
         newCell.classList.add('cell');
-        newCell.classList.add(difficulty);
+        // newCell.classList.add(difficulty);
+        newCell.style.width = `calc(100% / ${difficulty})`
+        newCell.style.height = `calc(100% / ${difficulty})`
         //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
         newCell.addEventListener('click', cellClickHandler);
         //secondo eventlistener per il click destro che ci permette di mettere bandierine sulle celle
@@ -205,20 +208,6 @@ function buildGrid(difficulty) {
             }
             
         }
-    }
-}
-
-function difficultyToNumber(difficultyString) {
-    switch (difficultyString) {
-        case 'easy':
-            return 100;
-            break;
-        case 'medium':
-            return 81;
-            break;
-        case 'hard':
-            return 49;
-            break;
     }
 }
 

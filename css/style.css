@@ -12,7 +12,7 @@ header {
 }
 
 main {
-    height: 85vh;
+    min-height: 85vh;
     padding: 2rem;
     background-color: #bdbdbd;
     display: flex;
@@ -29,6 +29,7 @@ footer {
     border: 1px solid white;
     height: 500px;
     width: 500px;
+    flex-shrink: 0;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
