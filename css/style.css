@@ -6,7 +6,7 @@
 
 header {
     height: 10vh;
-    padding: 1rem 10rem;
+    padding: 1rem 10rem 1rem 1rem;
     text-align: end;
     vertical-align: middle;
 }
@@ -26,9 +26,9 @@ footer {
 }
 
 .grid-container {
-    border: 1px solid white;
+    /* border: 1px solid white; */
     height: 500px;
-    width: 500px;
+    max-width: 500px;
     flex-shrink: 0;
     display: flex;
     flex-wrap: wrap;
@@ -51,7 +51,13 @@ footer {
     align-items: center;
     font-family: monospace;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+}
+
+
+.cell::after {
+    content: '';
+    padding-bottom: 100%;
 }
 
 .cell.easy {
@@ -109,6 +115,7 @@ footer {
 }
 
 .cell.bomb span::before {
+    font-size: 0.9em;
     content: '\01F4A3';
 }
 
@@ -118,5 +125,17 @@ footer {
 }
 
 .cell.flag span::before {
+    font-size: 0.9em;
     content: '\01F6A9';
+}
+
+@media screen and (max-width: 565px) {
+    .cell {
+        font-size: 1rem;
+    }
+}
+@media screen and (max-width: 370px) {
+    .cell {
+        font-size: 0.8rem;
+    }
 }

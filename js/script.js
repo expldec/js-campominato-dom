@@ -48,7 +48,7 @@ function buildGrid(difficulty) {
         newCell.classList.add('cell');
         // newCell.classList.add(difficulty);
         newCell.style.width = `calc(100% / ${difficulty})`
-        newCell.style.height = `calc(100% / ${difficulty})`
+        newCell.style.maxHeight = `calc(100% / ${difficulty})`
         //aggiungiamo un eventListener che applica tutta la logica del gioco quando clicchiamo sul div
         newCell.addEventListener('click', cellClickHandler);
         //secondo eventlistener per il click destro che ci permette di mettere bandierine sulle celle
@@ -176,19 +176,15 @@ function buildGrid(difficulty) {
         for (let i = 0; i < thisAdjacents.length; i++) {
             // a ogni giro, imbrigliamo la cella 
             let thisAdjacentAdjacent = document.querySelector(`[data-cellno='${thisAdjacents[i]}']`);
-            console.log('cell', thisAdjacents[i]);
-            // console.log(thisAdjacentAdjacent);
             //troviamo le celle a loro volta adiacenti a questa
             let thisAdjacentAdjacents = getAdjacents(thisAdjacents[i],Math.sqrt(gridSize),Math.sqrt(gridSize));
-            console.log('this adjacent cell has he following neighbors:', thisAdjacentAdjacents);
             //contiamo le bombe intorno a questa cella
             let thisAdjacentAdjacentBombs = countBombsInArray(thisAdjacentAdjacents);
-            console.log(`this adjacent cell is surrounded by ${thisAdjacentAdjacentBombs} bombs`);
+            // console.log(`cell ${thisAdjacents[i]} has the following neighbors: ${thisAdjacentAdjacents}. ${thisAdjacentAdjacentBombs} are bombs`);
             // controlliamo che non sia già stata scoperta
             let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains('active');
             let isThisAdjacentAdjacentFlagged = thisAdjacentAdjacent.classList.contains('flag');
-            console.log('is it active?', isThisAdjacentAdjacentClicked);
-            console.log('is it flagged?', isThisAdjacentAdjacentFlagged);
+            // console.log(`Is it active? ${isThisAdjacentAdjacentClicked}. Is it flagged? ${isThisAdjacentAdjacentFlagged}`);
             // se non è attiva (e non è flaggata), la attiviamo
             if (!isThisAdjacentAdjacentClicked&&!isThisAdjacentAdjacentFlagged) {
                 console.log('good. Activating cell.');
