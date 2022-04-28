@@ -86,7 +86,10 @@ function buildGrid(difficulty) {
                 adjacentsDrilldown(thisAdjacents);
             }
             //aggiungo la cella cliccata al conteggio delle celle "pulite" scoperte
-            safeCellsClicked.push(thisCellNumber);
+            //(se non l'abbiamo già aggiunto dentro la funzione ricorsiva)
+            if (!safeCellsClicked.includes(thisCellNumber)) {
+                safeCellsClicked.push(thisCellNumber);
+            }
             console.log(`Safe cells clicked: ${safeCellsClicked.length} To win: ${gridSize - numberofBombs}`);
             //se hai scoperto tutte le celle pulite, hai vinto.
             if (safeCellsClicked.length >= gridSize - numberofBombs) {
