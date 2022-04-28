@@ -250,65 +250,56 @@ function generateUniqueRandomsinRange(quantity, rangeMax) {
 function getAdjacents(cellno,width,height) {
     const isThisEdge = isEdge(cellno,width,height);
     const adjacents = [];
-    if ([0,4,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width - 1); //la cella adiacente in alto a sinistra
+    
+    if (!isThisEdge[0]) {                   // se la cella non è sul bordo superiore
+        adjacents.push(cellno - width);     // pushamo la cella adiacente in alto
     }
-    if ([0,3,4,6,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width); // la cella adiacente in alto
+    if (!isThisEdge[1]) {                   // se la cella non è sul bordo inferiore
+        adjacents.push(cellno + width);     // pushamo la cella adiacente in basso
     }
-    if ([0,3,6,8].includes(isThisEdge)) {
-        adjacents.push(cellno - width + 1); // la cella adiacente in alto a destra
+    if (!isThisEdge[2]) {                   // se la cella non è sul bordo sinistro
+        adjacents.push(cellno - 1);        // pushamo la cella adiacente a sinistra
     }
-    if ([0,2,4,5,7,8].includes(isThisEdge)) {
-        adjacents.push(cellno - 1);}    // la cella adiacente a sinistra
-
-    if ([0,1,3,5,6,8].includes(isThisEdge)) {
-        adjacents.push(cellno + 1); // la cella adiacente a destra
+    if (!isThisEdge[3]) {                   // se la cella non è sul bordo destro
+        adjacents.push(cellno + 1);         // pushamo la cella adiacente a destra
     }
-    if ([0,2,5,7].includes(isThisEdge)) {
-        adjacents.push(cellno + width - 1); // la cella adiacente in basso a sinistra
+    if (!isThisEdge[0] && !isThisEdge[2]) { // se la cella non è sul bordo superiore nè sul bordo sinistro
+        adjacents.push(cellno - width - 1); // pushamo la cella adiacente in alto a sinistra
     }
-    if ([0,1,2,5,6,7].includes(isThisEdge)) {
-        adjacents.push(cellno + width); // la cella adiacente in basso
+    if (!isThisEdge[0] && !isThisEdge[3]) { // se la cella non è sul bordo superiore nè sul bordo destro
+        adjacents.push(cellno - width + 1); // pushamo la cella adiacente in alto a destra
     }
-    if ([0,1,5,6].includes(isThisEdge)) {
-        adjacents.push(cellno + width + 1); // la cella adiacente in basso a destra
+    if (!isThisEdge[1] && !isThisEdge[2]) { // se la cella non è sul bordo inferiore nè sul bordo sinistro
+        adjacents.push(cellno + width - 1); // pushamo la cella adiacente in basso a sinistra
+    }
+    if (!isThisEdge[1] && !isThisEdge[3]) { // se la cella non è sul bordo inferiore nè sul bordo destro
+        adjacents.push(cellno + width + 1); // pushamo la cella adiacente in basso a destra
     }
     return adjacents;
 }
 
 // Prende il numero di cella di una griglia rettangolare dove le celle sono numerate da destra a sinistra, dall'alto verso il basso
-// e restituisce un numero che rappresenta la sua posizione rispetto a un bordo.
+// e restituisce un array che rappresenta la sua posizione rispetto ai bordi.
 //
 // Valori di input:
 // cellno (int): il numero della cella
 // width (int): il numero delle celle lungo la larghezza della griglia rettangolare
 // height (int): il numero delle celle lungo l'altezza della griglia rettangolare
 //
-// Valori di return: 
-// 0: la cella non è lungo un bordo
-// 1: la cella copre l'angolo in alto a sinistra
-// 2: la cella copre l'angolo in alto a destra
-// 3: la cella copre l'angolo in basso a sinistra
-// 4: la cella copre l'angolo in basso a destra
-// 5: la cella si trova sul bordo superiore
-// 6: la cella si trova sul bordo sinistro
-// 7: la cella si trova sul bordo destro
-// 8: la cella si trova sul bordo inferiore
+// Valore di return:
+// edgeArray = [isOnTopEdge,isOnBottomEdge,isOnLeftEdge,isonRightEdge]
+// dove ciascun elemento è un valore booleano che è true se la cella si trova lungo il bordo in questione
+// (rispettivamente, bordo superiore, inferiore, sinistro e destro)
+// Esempi:
+// - isEdge(5,4,5) restituirà [false, false, true, false] --> la cella 5 di un quadrato 4*5 è sul bordo sinistro
+// - isEdge(20,4,5) resituirà [false, true, false, true]  --> la cella 5 di un quadrato 4*5 è sul bordo destro e anche sul bordo inferiore
 function isEdge(cellno,width,height) {
     const isOnTopEdge = Math.floor((cellno - 1) / width) === 0;
     const isOnBottomEdge = Math.floor((cellno - 1) / width) + 1 === height;
     const isOnLeftEdge = cellno % width === 1;
     const isonRightEdge = cellno % width === 0;
-    
-    return isOnTopEdge && isOnLeftEdge ? 1
-         : isOnTopEdge && isonRightEdge ? 2
-         : isOnBottomEdge && isOnLeftEdge ? 3
-         : isOnBottomEdge && isonRightEdge ? 4
-         : isOnTopEdge ? 5
-         : isOnLeftEdge ? 6
-         : isonRightEdge ? 7
-         : isOnBottomEdge ? 8
-         : 0;
+    const edgeArray = [isOnTopEdge,isOnBottomEdge,isOnLeftEdge,isonRightEdge];
+
+    return edgeArray;
 
 }
