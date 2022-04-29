@@ -63,9 +63,54 @@ function buildGrid(difficulty) {
 
     //Funzione per stabilire cosa succede nel gioco al click sinistro su una cella
     function cellClickHandler() {
+        //leggiamo il numero di questa cella
         let thisCellNumber = parseInt(this.dataset.cellno);
+        //troviamo le celle adiacenti a questa
+        let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
+        //contiamo quante bombe ci sono nelle celle adiacenti
+        let thisAdjacentBombs = getCommonElements(thisAdjacents,bombArray);
+        //vediamo se è una bomba
+        let isThisABomb = bombArray.includes(thisCellNumber);
+
+        // Se è la prima cella che clicchiamo, voglio che non sia una bomba nè che ci siano bombe intorno
+        // il seguente if contiene le istruzioni per spostare eventuali bombe toccate dal primo click
+        if (safeCellsClicked.length === 0 && (thisAdjacentBombs.length > 0 || isThisABomb)) {
+            //dichiaro un array con le bombe da spostare
+            let cellsToClear = thisAdjacentBombs;
+            // se la cella cliccata è una bomba, la aggiungo all'array
+            if (isThisABomb) {
+                cellsToClear.push(thisCellNumber);
+            }
+            // dichiaro un array con le celle che NON voglio siano bombe (la prima cella cliccata e le sue adiacenti)
+            let cleanMask = thisAdjacents;
+            cleanMask.push(thisCellNumber);
+            //scorro l'array delle bombe da spostare
+            for (let i = 0; i < cellsToClear.length; i++) {
+                // trovo, nell'array delle bombe, l'index della bomba da spostare a questo giro del loop
+                let bombIndex = bombArray.indexOf(cellsToClear[i])
+                console.log(`${bombArray[bombIndex]} is a bomb discovered on the first move of the game. Let's change that`);
+                //inizio un ciclo while
+                let cleanSwap = false;
+                while (!cleanSwap){
+                    // genero un numero a caso che sarà la nuova cella della bomba
+                    let swapCandidate = generateUniqueRandomsinRange(1,gridSize)[0];
+                    // Se la nuova cella non è **nè** già una bomba **nè** è presente nell'area da tenere pulita 
+                    if (!cleanMask.includes(swapCandidate) && !bombArray.includes(swapCandidate)) {
+                        // la sostituisco alla vecchia cella e chiudo il ciclo
+                        console.log(`swapping ${bombArray[bombIndex]} with ${swapCandidate}`);
+                        bombArray[bombIndex] = swapCandidate;
+                        cleanSwap = true;
+                    }
+                }
+            }
+            console.log(bombArray);
+            // aggiorno le variabili per riflettere la nuova situazione
+            isThisABomb = bombArray.includes(thisCellNumber);
+            thisAdjacentBombs = getCommonElements(thisAdjacents,bombArray);
+        }
+
         // se hai cliccato una bomba, hai perso
-        if (bombArray.includes(thisCellNumber)) {
+        if (isThisABomb) {
             this.classList.add('bomb');
             gameEnd(false);
         }
@@ -73,15 +118,10 @@ function buildGrid(difficulty) {
         else {
             //attiviamo la cella
             this.classList.add('active');
-            //troviamo le celle adiacenti a questa
-            let thisAdjacents = getAdjacents(thisCellNumber,Math.sqrt(gridSize),Math.sqrt(gridSize));
-            console.log(thisAdjacents);
-            //contiamo quante bombe ci sono nelle celle adiacenti
-            let thisAdjacentBombs = countBombsInArray(thisAdjacents);
             //se intorno ci sono bombe, scriviamo il numero di bombe nella cella e le diamo una classe per cambiare colore al testo
-            if (thisAdjacentBombs > 0) {
-                this.classList.add(`b${thisAdjacentBombs}`);
-                this.querySelector('span').textContent = thisAdjacentBombs;
+            if (thisAdjacentBombs.length > 0) {
+                this.classList.add(`b${thisAdjacentBombs.length}`);
+                this.querySelector('span').textContent = thisAdjacentBombs.length;
             }
             // se non ci sono bombe intorno, scopriamo anche le celle adiacenti a cascata.
             else {
@@ -155,23 +195,14 @@ function buildGrid(difficulty) {
         }
     }
 
-    function countBombsInArray(adjacentList) {
-        let sumOfBombs = 0;
-        for (let i = 0; i < adjacentList.length; i++) {
-            if (bombArray.includes(adjacentList[i])) {
-                sumOfBombs++;
-            }
-        }
-        return sumOfBombs;
-    }
-
-    //funzione ricorsiva che viene chiamata quando una cella scoperta non ha bombe intorno
-    // prende un array di celle,
-    // e scopre le celle libere tra queste finché ne trova tra gli adiacenti degli adiacenti degli adiacenti ecc.
+    // funzione ricorsiva che viene chiamata quando una cella scoperta non ha bombe intorno
+    // prende un array di celle e scopre le celle libere (non flaggate) tra queste,
+    // se qualsiasi di queste celle non ha a sua volta bombe intorno, la funzione calcola le celle adiacenti a quest'ultima
+    // e le usa per chiamare se stessa.
     function adjacentsDrilldown(thisAdjacents) {
         //variabile di debug per controllare che non faccia troppe ricursioni
         recursiveCount++;
-        console.log('No bombs around. drilling down to its neighbors');
+        // console.log('No bombs around. drilling down to its neighbors');
         //facciamo partire un loop per scorrere tutte le celle adiacenti.
         for (let i = 0; i < thisAdjacents.length; i++) {
             // a ogni giro, imbrigliamo la cella 
@@ -179,7 +210,7 @@ function buildGrid(difficulty) {
             //troviamo le celle a loro volta adiacenti a questa
             let thisAdjacentAdjacents = getAdjacents(thisAdjacents[i],Math.sqrt(gridSize),Math.sqrt(gridSize));
             //contiamo le bombe intorno a questa cella
-            let thisAdjacentAdjacentBombs = countBombsInArray(thisAdjacentAdjacents);
+            let thisAdjacentAdjacentBombs = getCommonElements(thisAdjacentAdjacents,bombArray);
             // console.log(`cell ${thisAdjacents[i]} has the following neighbors: ${thisAdjacentAdjacents}. ${thisAdjacentAdjacentBombs} are bombs`);
             // controlliamo che non sia già stata scoperta
             let isThisAdjacentAdjacentClicked = thisAdjacentAdjacent.classList.contains('active');
@@ -187,18 +218,18 @@ function buildGrid(difficulty) {
             // console.log(`Is it active? ${isThisAdjacentAdjacentClicked}. Is it flagged? ${isThisAdjacentAdjacentFlagged}`);
             // se non è attiva (e non è flaggata), la attiviamo
             if (!isThisAdjacentAdjacentClicked&&!isThisAdjacentAdjacentFlagged) {
-                console.log('good. Activating cell.');
+                // console.log('good. Activating cell.');
                 thisAdjacentAdjacent.classList.add('active');
                 safeCellsClicked.push(thisAdjacents[i]);
                 // se ha delle bombe intorno, la popoliamo con il conteggio delle bombe
-                if (thisAdjacentAdjacentBombs > 0) {
-                    thisAdjacentAdjacent.classList.add(`b${thisAdjacentAdjacentBombs}`);
-                    console.log('adding text content:', thisAdjacentAdjacentBombs);
-                    thisAdjacentAdjacent.querySelector('span').textContent = thisAdjacentAdjacentBombs;
+                if (thisAdjacentAdjacentBombs.length > 0) {
+                    thisAdjacentAdjacent.classList.add(`b${thisAdjacentAdjacentBombs.length}`);
+                    // console.log('adding text content:', thisAdjacentAdjacentBombs.length);
+                    thisAdjacentAdjacent.querySelector('span').textContent = thisAdjacentAdjacentBombs.length;
                 }
                 // se NON è attiva e NON ha bombe intorno, chiamiamo la funzione in cui già ci troviamo, ricorsivamente,
                 // passadole i vicini di questa cella 
-                if (thisAdjacentAdjacentBombs === 0) {
+                if (thisAdjacentAdjacentBombs.length === 0) {
                     adjacentsDrilldown(thisAdjacentAdjacents);
                 }
             }
@@ -222,6 +253,17 @@ function generateUniqueRandomsinRange(quantity, rangeMax) {
     //ordino l'array. Step superfluo. Fatto puramente per leggibilità umana.
     uniqueRandoms.sort(function(a, b){return a - b});
     return uniqueRandoms;
+}
+
+// questa funzione prende due array e restituisce un array contente gli elementi che sono presenti in entrambi gli array
+function getCommonElements(array1,array2) {
+    const commonElements = [];
+    for (let i = 0; i < array1.length; i++) {
+        if (array2.includes(array1[i])) {
+            commonElements.push(array1[i]);
+        }
+    }
+    return commonElements;
 }
 
 // Prende il numero di cella di una griglia rettangolare dove le celle sono numerate da destra a sinistra, dall'alto verso il basso
